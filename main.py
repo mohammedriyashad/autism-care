@@ -21,7 +21,7 @@ init_db()
 
 # ── App ───────────────────────────────────────────────────────
 app = FastAPI(
-    title       = "VoiceMe AAC — Advanced System",
+    title       = "AutismCare AAC — Advanced System",
     description = "AI-Driven Assistive Communication for Non-Verbal Autistic Individuals",
     version     = "2.0.0",
 )
@@ -56,7 +56,7 @@ async def health():
     return {
         "status"  : "ok",
         "version" : "2.0.0",
-        "features": ["Phi-2 LLM", "DeepFace Emotion", "MediaPipe Gesture+Pose",
+        "features": ["Gemini LLM", "DeepFace Emotion", "MediaPipe Gesture+Pose",
                      "Child Profiles", "Caregiver Alerts", "PDF Reports", "Custom Symbols"],
     }
 

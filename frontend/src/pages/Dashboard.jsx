@@ -3,7 +3,15 @@ import React from 'react'
 import CameraPanel      from '../components/CameraPanel'
 import SymbolBoard      from '../components/SymbolBoard'
 import ConversationPanel from '../components/ConversationPanel'
-import { MicPanel, FusionPanel, StatsPanel, HistoryPanel } from '../components/RightPanels'
+import {
+  CareCompanionPanel,
+  FusionPanel,
+  HistoryPanel,
+  MicPanel,
+  RoutinePanel,
+  StatsPanel,
+  SupportSuggestionsPanel,
+} from '../components/RightPanels'
 import { SignalBox } from '../components/ui'
 import { useStore } from '../utils/store'
 
@@ -21,30 +29,21 @@ export default function Dashboard() {
   const { gesture, pose } = useStore()
 
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: '280px 1fr 260px',
-      gridTemplateRows: '1fr',
-      gap: 10,
-      height: '100%',
-      overflow: 'hidden',
-    }}>
+    <div className="dashboard-grid">
 
       {/* ── LEFT: Camera + Signals ── */}
-      <div style={{
-        display: 'flex', flexDirection: 'column', gap: 10,
-        overflowY: 'auto', scrollbarWidth: 'none',
-      }}>
+      <div className="dashboard-left">
+        <CareCompanionPanel/>
         <CameraPanel/>
         <SignalBox
-          title="🤲 Gesture — MediaPipe + ML"
+          title="🤲 Communication Gesture"
           icon={gesture.icon}
-          name={gesture.name === 'none' ? 'No hand detected' : gesture.name}
-          meaning={gesture.meaning}
+          name={gesture.name === 'none' ? 'Waiting for gesture' : gesture.name}
+          meaning={gesture.name === 'none' ? 'Ready when the child is ready' : gesture.meaning}
           hints={GESTURE_HINTS}
         />
         <SignalBox
-          title="🧍 Pose — MediaPipe Pose"
+          title="🧍 Body Comfort Cue"
           icon={pose.icon}
           name={pose.meaning}
           meaning={pose.name}
@@ -53,13 +52,7 @@ export default function Dashboard() {
       </div>
 
       {/* ── CENTER: 2-Way Conversation + Symbol Board ── */}
-      <div style={{
-        display: 'grid',
-        gridTemplateRows: '1fr 260px',
-        gap: 10,
-        minWidth: 0,
-        minHeight: 0,
-      }}>
+      <div className="dashboard-center">
         {/* 2-Way Conversation Panel — MAIN FEATURE */}
         <ConversationPanel/>
 
@@ -68,12 +61,11 @@ export default function Dashboard() {
       </div>
 
       {/* ── RIGHT: Mic + Fusion + Stats + History ── */}
-      <div style={{
-        display: 'flex', flexDirection: 'column', gap: 10,
-        overflowY: 'auto', scrollbarWidth: 'none',
-      }}>
+      <div className="dashboard-right">
+        <SupportSuggestionsPanel/>
         <MicPanel/>
         <FusionPanel/>
+        <RoutinePanel/>
         <StatsPanel/>
         <HistoryPanel/>
       </div>

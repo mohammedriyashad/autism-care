@@ -12,6 +12,15 @@ const CATS = [
   { l:'Objects',    i:'📦', w:['food','water','toy','medicine','book','phone'] },
 ]
 
+const FALLBACK_ICONS = {
+  eat: '🍽️', drink: '🥤', toilet: '🚻', sleep: '😴', pain: '🩹', help: '🆘',
+  happy: '😊', sad: '😢', angry: '😠', scared: '😟', tired: '😴', sick: '🤒',
+  play: '🎮', music: '🎵', read: '📘', outside: '🌳', stop: '✋', go: '➡️',
+  mom: '👩', dad: '👨', doctor: '🩺', teacher: '🧑‍🏫', friend: '🧒', family: '👨‍👩‍👧',
+  home: '🏠', school: '🏫', hospital: '🏥', park: '🌳', car: '🚗', bedroom: '🛏️',
+  food: '🍎', water: '🥤', toy: '🧸', medicine: '💊', book: '📘', phone: '📱',
+}
+
 const cache = {}
 
 async function fetchPics(words) {
@@ -32,10 +41,12 @@ export default function SymbolBoard() {
   const [activeCat, setActiveCat] = useState(0)
   const [pics, setPics]           = useState([])
   const [loading, setLoading]     = useState(true)
+  const [failedImages, setFailedImages] = useState({})
   const { symbols, addSymbol, removeSymbol, clearSymbols, incStat } = useStore()
 
   useEffect(() => {
     setLoading(true)
+    setFailedImages({})
     fetchPics(CATS[activeCat].w).then(p => { setPics(p); setLoading(false) })
   }, [activeCat])
 
@@ -53,7 +64,7 @@ export default function SymbolBoard() {
   }
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', gap:10, flex:1, minHeight:0 }}>
+    <div className="symbol-board-modern">
 
       {/* Message strip */}
       <Card style={{ flexShrink:0 }}>
@@ -67,10 +78,10 @@ export default function SymbolBoard() {
                 </span>
               : symbols.map((s,i) => (
                 <div key={i} onClick={() => handleRemove(i)} title="Click to remove" style={{
-                  display:'inline-flex', alignItems:'center', gap:4,
-                  background:'rgba(108,99,255,.15)', border:'1px solid rgba(108,99,255,.35)',
-                  borderRadius:6, padding:'3px 8px', fontSize:10, fontWeight:600,
-                  color:'#C4B5FD', cursor:'pointer', animation:'chipIn .2s ease',
+                  display:'inline-flex', alignItems:'center', gap:6,
+                  background:'rgba(56,217,197,.12)', border:'1px solid rgba(56,217,197,.32)',
+                  borderRadius:999, padding:'6px 10px', fontSize:11, fontWeight:800,
+                  color:'var(--text)', cursor:'pointer', animation:'chipIn .2s ease',
                 }}>
                   {s.url && <img src={s.url} alt={s.label}
                     style={{ width:20, height:20, objectFit:'contain' }}/>}
@@ -88,39 +99,44 @@ export default function SymbolBoard() {
         <CardHeader icon="🎨" title="ARASAAC Symbol Board"/>
         <CardBody style={{ display:'flex', flexDirection:'column', gap:8, padding:9 }}>
           {/* Category tabs */}
-          <div style={{ display:'flex', gap:5, flexWrap:'wrap', flexShrink:0 }}>
+          <div className="symbol-cats">
             {CATS.map((c,i) => (
               <button key={i} onClick={() => setActiveCat(i)} style={{
-                background: activeCat===i ? 'rgba(0,200,240,.1)' : 'var(--card)',
+                background: activeCat===i ? 'rgba(56,217,197,.16)' : 'rgba(255,255,255,.07)',
                 border:`1px solid ${activeCat===i ? 'var(--cyan)' : 'var(--border)'}`,
-                borderRadius:16, padding:'4px 10px', fontSize:10, fontWeight:600,
+                borderRadius:999, padding:'7px 12px', fontSize:12, fontWeight:800,
                 cursor:'pointer', color: activeCat===i ? 'var(--cyan)' : 'var(--muted)',
                 transition:'all .2s', fontFamily:'var(--font)',
               }}>{c.i} {c.l}</button>
             ))}
           </div>
           {/* Symbols */}
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(80px,1fr))',
-            gap:7, overflowY:'auto', flex:1 }}>
+          <div className="symbol-grid-modern">
             {loading
-              ? Array(6).fill(0).map((_,i) => <Skeleton key={i} h={90} r={9}/>)
+              ? Array(6).fill(0).map((_,i) => <Skeleton key={i} h={104} r={14}/>)
               : pics.map((p,i) => (
                 <div key={i} onClick={() => handleAdd(p)} style={{
-                  background:'var(--surface)', border:'1px solid var(--border)',
-                  borderRadius:9, padding:'6px 4px', textAlign:'center',
+                  background:'rgba(255,255,255,.075)', border:'1px solid var(--border)',
+                  borderRadius:16, padding:'12px 8px', textAlign:'center',
                   cursor:'pointer', transition:'all .2s',
-                  display:'flex', flexDirection:'column', alignItems:'center', gap:3,
+                  display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:8,
+                  minHeight:104,
                 }}
-                onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--violet)';e.currentTarget.style.transform='translateY(-2px)'}}
+                onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--cyan)';e.currentTarget.style.transform='translateY(-3px)'}}
                 onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--border)';e.currentTarget.style.transform='none'}}
                 >
-                  {p.url
+                  {p.url && !failedImages[p.id || p.label]
                     ? <img src={p.url} alt={p.label}
-                        style={{ width:44, height:44, objectFit:'contain' }}
-                        onError={e=>e.target.style.display='none'}/>
-                    : <span style={{ fontSize:28 }}>🖼️</span>
+                        style={{ width:52, height:52, objectFit:'contain', borderRadius:10, background:'rgba(255,255,255,.08)' }}
+                        onError={() => setFailedImages(prev => ({ ...prev, [p.id || p.label]: true }))}/>
+                    : <span style={{
+                        width:52, height:52, borderRadius:16,
+                        display:'grid', placeItems:'center',
+                        background:'linear-gradient(135deg,rgba(79,140,255,.22),rgba(56,217,197,.16))',
+                        fontSize:27,
+                      }}>{FALLBACK_ICONS[p.label?.toLowerCase()] || '💬'}</span>
                   }
-                  <span style={{ fontSize:9, fontWeight:600, color:'var(--muted)' }}>{p.label}</span>
+                  <span style={{ fontSize:12, fontWeight:800, color:'var(--text2)' }}>{p.label}</span>
                 </div>
               ))
             }

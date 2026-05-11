@@ -87,6 +87,22 @@ function MessageBubble({ msg }) {
   )
 }
 
+function normalizeCaregiverSentence(sentence) {
+  if (!sentence) {
+    return '🤗 AI caregiver is waiting for setup. You can still use camera, symbols, profiles, and speech tools.'
+  }
+  const lower = sentence.toLowerCase()
+  if (
+    lower.includes('api key issue') ||
+    lower.includes('gemini_api_key') ||
+    lower.includes('quota') ||
+    lower.includes('network error')
+  ) {
+    return '🤗 AI caregiver is ready for setup. Add your Gemini API key later, and responses will appear here.'
+  }
+  return sentence
+}
+
 // ── Main ConversationPanel ────────────────────────────────────
 export default function ConversationPanel() {
   const [messages,   setMessages]   = useState([])
@@ -162,7 +178,7 @@ export default function ConversationPanel() {
     setIsTyping(true)
     try {
       const { data } = await axios.post('/api/llm/greet')
-      const sentence = data.sentence
+      const sentence = normalizeCaregiverSentence(data.sentence)
       setIsTyping(false)
       addMessage('assistant', sentence)
       setSentence(sentence)
@@ -202,7 +218,7 @@ export default function ConversationPanel() {
     setIsTyping(true)
     try {
       const { data } = await axios.post('/api/llm/respond')
-      const sentence = data.sentence
+      const sentence = normalizeCaregiverSentence(data.sentence)
       setIsTyping(false)
       addMessage('assistant', sentence)
       setSentence(sentence)

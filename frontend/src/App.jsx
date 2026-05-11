@@ -1,4 +1,4 @@
-// src/App.jsx — VoiceMe AAC v3 — Warm Light Theme + Groq + 2-Way Conversation
+// src/App.jsx — VoiceMe AAC v3 — Warm Light Theme + Gemini+ 2-Way Conversation
 import React, { useState, useRef, useCallback, useEffect } from 'react'
 import { useStore }  from './utils/store'
 import Dashboard     from './pages/Dashboard'
@@ -6,6 +6,7 @@ import Profiles      from './pages/Profiles'
 import Alerts        from './pages/Alerts'
 import Reports       from './pages/Reports'
 import Symbols       from './pages/Symbols'
+import LandingPage   from './pages/LandingPage'
 import { StatusPill } from './components/ui'
 import axios from 'axios'
 
@@ -23,6 +24,8 @@ const PAGES = { dashboard:Dashboard, profiles:Profiles,
 
 export default function App() {
   const [tab, setTab] = useState('dashboard')
+  const [isAuthenticated, setIsAuthenticated] = useState(() => localStorage.getItem('voiceme_auth') === 'true')
+  const [showDashboard, setShowDashboard] = useState(() => localStorage.getItem('voiceme_auth') === 'true')
   const wsRef         = useRef(null)
   const timerRef      = useRef(null)
 
@@ -64,60 +67,63 @@ export default function App() {
   }, [])
 
   useEffect(() => {
+    if (!showDashboard) return undefined
     connect()
     return () => { clearTimeout(timerRef.current); wsRef.current?.close() }
-  }, [])
+  }, [showDashboard, connect])
 
   const Page = PAGES[tab]
 
+  const handleAuthSuccess = () => {
+    localStorage.setItem('voiceme_auth', 'true')
+    setIsAuthenticated(true)
+    setShowDashboard(true)
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('voiceme_auth')
+    setIsAuthenticated(false)
+    setShowDashboard(false)
+    setTab('dashboard')
+    clearTimeout(timerRef.current)
+    wsRef.current?.close()
+  }
+
+  if (!showDashboard) {
+    return (
+      <LandingPage
+        isAuthenticated={isAuthenticated}
+        onAuthSuccess={handleAuthSuccess}
+        onDashboard={() => setShowDashboard(true)}
+      />
+    )
+  }
+
   return (
-    <div style={{
-      display: 'flex', flexDirection: 'column',
-      height: '100vh', position: 'relative', zIndex: 1,
-    }}>
+    <div className="dashboard-shell">
 
       {/* ── TOP BAR ── */}
-      <header style={{
-        display: 'flex', alignItems: 'center', gap: 12,
-        padding: '0 16px', height: 56, flexShrink: 0,
-        background: 'var(--card)',
-        borderBottom: '2px solid var(--border)',
-        boxShadow: 'var(--shadow-sm)',
-      }}>
+      <header className="dashboard-topbar">
 
         {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-          <div style={{
-            width: 38, height: 38, borderRadius: 12,
-            background: 'linear-gradient(135deg, var(--primary), var(--primary2))',
-            display: 'flex', alignItems: 'center',
-            justifyContent: 'center', fontSize: 20,
-            boxShadow: '0 3px 10px rgba(244,132,95,0.35)',
-          }}>🗣️</div>
+        <div className="dashboard-logo">
+          <div className="dashboard-logo-icon">🗣️</div>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--text)' }}>
+            <div className="dashboard-logo-title">
               Voice<span style={{ color: 'var(--primary)' }}>Me</span>
               <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)',
                 marginLeft: 6 }}>AAC</span>
             </div>
-            <div style={{ fontSize: 9, color: 'var(--muted)', letterSpacing: '1.5px',
-              textTransform: 'uppercase', fontWeight: 700 }}>
-              Groq · Llama3 · 2-Way Communication
-            </div>
+            <div className="dashboard-logo-sub">Supportive AAC dashboard</div>
           </div>
         </div>
 
         {/* Active profile badge */}
         {activeProfile && (
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 7,
-            background: 'rgba(244,132,95,.08)',
-            border: '1.5px solid rgba(244,132,95,.25)',
-            borderRadius: 20, padding: '5px 13px',
-          }}>
+          <div className="dashboard-profile-badge">
             <span style={{ fontSize: 16 }}>🧒</span>
             <div>
-              <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--primary)' }}>
+              <div style={{ fontSize: 11, fontWeight: 900 }}>
                 {activeProfile.name}
               </div>
               <div style={{ fontSize: 9, color: 'var(--muted)' }}>Active session</div>
@@ -126,23 +132,10 @@ export default function App() {
         )}
 
         {/* Navigation tabs */}
-        <div style={{
-          display: 'flex', gap: 2,
-          background: 'var(--surface)',
-          border: '1.5px solid var(--border)',
-          borderRadius: 12, padding: 3,
-          marginLeft: activeProfile ? 0 : 'auto',
-        }}>
+        <div className="dashboard-tabs">
           {TABS.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)} style={{
-              padding: '6px 14px', borderRadius: 9, cursor: 'pointer',
-              fontSize: 11, fontWeight: tab === t.id ? 800 : 500,
-              color: tab === t.id ? 'var(--primary)' : 'var(--muted)',
-              background: tab === t.id ? 'var(--card)' : 'none',
-              border: 'none', transition: 'all .2s',
-              fontFamily: 'var(--font)',
-              boxShadow: tab === t.id ? 'var(--shadow-sm)' : 'none',
-            }}>
+            <button key={t.id} onClick={() => setTab(t.id)}
+              className={`dashboard-tab ${tab === t.id ? 'active' : ''}`}>
               {t.label}
               {t.id === 'alerts' && alertCount > 0 && (
                 <span style={{
@@ -158,19 +151,18 @@ export default function App() {
         </div>
 
         {/* Status pills */}
-        <div style={{
-          display: 'flex', gap: 6, alignItems: 'center',
-          marginLeft: 'auto', flexWrap: 'wrap',
-        }}>
+        <div className="dashboard-status">
           <StatusPill label="CAM"     active={false}/>
           <StatusPill label="GESTURE" active={gesture.name !== 'none' && gesture.name !== 'No hand detected'}/>
           <StatusPill label="EMOTION" active={emotion.confidence > 0.3}/>
-          <StatusPill label="GROQ"    active={wsConnected}/>
+          <StatusPill label="SERVER" active={wsConnected}/>
+          <button onClick={() => setShowDashboard(false)} className="dashboard-shell-button">Landing</button>
+          <button onClick={handleLogout} className="dashboard-shell-button danger">Logout</button>
         </div>
       </header>
 
       {/* ── PAGE CONTENT ── */}
-      <main style={{ flex: 1, overflow: 'hidden', padding: 10 }}>
+      <main className="dashboard-content">
         <Page/>
       </main>
     </div>

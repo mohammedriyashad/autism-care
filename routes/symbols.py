@@ -1,4 +1,4 @@
-"""routes/symbols.py — ARASAAC symbol search + custom symbol upload"""
+"""routes/symbols.py - ARASAAC symbol search + custom symbol upload"""
 import os, shutil
 from fastapi import APIRouter, Depends, UploadFile, File
 from pydantic import BaseModel
@@ -12,22 +12,29 @@ from utils.config   import config
 
 router = APIRouter()
 
+def _log(message: str):
+    """Log safely on Windows consoles that may not support Unicode."""
+    try:
+        print(message)
+    except UnicodeEncodeError:
+        print(message.encode("ascii", errors="backslashreplace").decode("ascii"))
+
 class SymbolItem(BaseModel):
     id:    str
     label: str
     url:   Optional[str] = None
 
-# ── ARASAAC search proxy ──────────────────────────────────────
+# ARASAAC search proxy
 @router.get('/search/{keyword}')
 async def search(keyword: str, limit: int = 6):
-    """Proxy ARASAAC API — fixes CORS issue for browser"""
+    """Proxy ARASAAC API - fixes CORS issue for browser"""
     url = f'{config.ARASAAC_API_URL}/pictograms/{config.ARASAAC_LANG}/search/{keyword}'
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             r    = await client.get(url)
             data = r.json() if r.status_code == 200 else []
     except Exception as e:
-        print(f'[ARASAAC] Error fetching {keyword}: {e}')
+        _log(f'[ARASAAC] Error fetching {keyword}: {e}')
         data = []
 
     results = []
@@ -43,10 +50,10 @@ async def search(keyword: str, limit: int = 6):
             'url':   f'https://static.arasaac.org/pictograms/{pid}/500/arasaac_{pid}_500.png',
         })
 
-    print(f'[ARASAAC] "{keyword}" → {len(results)} results')
+    _log(f'[ARASAAC] "{keyword}" -> {len(results)} results')
     return {'results': results, 'keyword': keyword}
 
-# ── Symbol board state ────────────────────────────────────────
+# Symbol board state
 @router.post('/add')
 async def add(symbol: SymbolItem):
     app_state.symbols.append(symbol.dict())
@@ -67,7 +74,7 @@ async def clear():
 async def state():
     return {'symbols': app_state.symbols}
 
-# ── Custom symbol upload ──────────────────────────────────────
+# Custom symbol upload
 @router.post('/custom/upload')
 async def upload_symbol(
     label: str,

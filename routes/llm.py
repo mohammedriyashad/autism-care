@@ -1,6 +1,6 @@
 """
 routes/llm.py
-Groq + Llama3 conversational caregiver endpoints.
+Gemini conversational caregiver endpoints.
 
 Endpoints:
   POST /api/llm/greet          — Initial greeting when profile activated

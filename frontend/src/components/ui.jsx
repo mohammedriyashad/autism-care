@@ -2,9 +2,9 @@
 import React from 'react'
 
 // ── Card ─────────────────────────────────────────────────────
-export function Card({ children, style, glow }) {
+export function Card({ children, style, glow, className = '' }) {
   return (
-    <div style={{
+    <div className={`dashboard-card ${className}`.trim()} style={{
       background: 'var(--card)',
       border: '1px solid var(--border)',
       borderRadius: 'var(--radius)',
@@ -12,6 +12,7 @@ export function Card({ children, style, glow }) {
       display: 'flex',
       flexDirection: 'column',
       boxShadow: glow ? 'var(--shadow-md)' : 'var(--shadow-sm)',
+      backdropFilter: 'blur(18px)',
       ...style,
     }}>
       {children}

@@ -1,7 +1,6 @@
 """models/emotion_model.py — DeepFace facial emotion detection"""
 import cv2
 import numpy as np
-from deepface import DeepFace
 
 EMOTION_MAP = {
     "happy":    {"emoji": "😊", "label": "Happy",        "intent": "feeling happy or excited",        "alert": False},
@@ -20,6 +19,7 @@ class EmotionDetector:
 
     def analyse(self, frame: np.ndarray) -> dict:
         try:
+            from deepface import DeepFace
             result = DeepFace.analyze(
                 img_path=frame, actions=["emotion"],
                 detector_backend=self.backend,

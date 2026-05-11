@@ -19,13 +19,19 @@ mp_styles  = mp.solutions.drawing_styles
 
 class PoseDetector:
     def __init__(self, confidence: float = 0.5):
-        self.pose = mp_pose.Pose(
-            static_image_mode=False, model_complexity=0,
-            min_detection_confidence=confidence, min_tracking_confidence=0.5,
-        )
+        self.confidence = confidence
+        self.pose = None
         self._sh_history = []
 
+    def _init_model(self):
+        if self.pose is None:
+            self.pose = mp_pose.Pose(
+                static_image_mode=False, model_complexity=0,
+                min_detection_confidence=self.confidence, min_tracking_confidence=0.5,
+            )
+
     def process(self, frame: np.ndarray) -> tuple:
+        self._init_model()
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         rgb.flags.writeable = False
         results = self.pose.process(rgb)

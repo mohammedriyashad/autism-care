@@ -23,21 +23,27 @@ mp_styles    = mp.solutions.drawing_styles
 
 class GestureDetector:
     def __init__(self, confidence: float = 0.65):
-        self.hands = mp_hands.Hands(
-            static_image_mode=False, max_num_hands=1,
-            min_detection_confidence=confidence,
-            min_tracking_confidence=0.5, model_complexity=0,
-        )
+        self.confidence = confidence
+        self.hands = None
         self.clf = self.encoder = None
-        if os.path.exists(MODEL_FILE):
-            with open(MODEL_FILE, "rb") as f:
-                data = pickle.load(f)
-            self.clf, self.encoder = data["model"], data["encoder"]
-            print(f"[Gesture] ML model loaded ✓")
-        else:
-            print("[Gesture] Using rule-based classifier (run train_gesture_model.py to improve)")
+
+    def _init_model(self):
+        if self.hands is None:
+            self.hands = mp_hands.Hands(
+                static_image_mode=False, max_num_hands=1,
+                min_detection_confidence=self.confidence,
+                min_tracking_confidence=0.5, model_complexity=0,
+            )
+            if os.path.exists(MODEL_FILE):
+                with open(MODEL_FILE, "rb") as f:
+                    data = pickle.load(f)
+                self.clf, self.encoder = data["model"], data["encoder"]
+                print(f"[Gesture] ML model loaded ✓")
+            else:
+                print("[Gesture] Using rule-based classifier (run train_gesture_model.py to improve)")
 
     def process(self, frame: np.ndarray) -> tuple:
+        self._init_model()
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         rgb.flags.writeable = False
         results = self.hands.process(rgb)
